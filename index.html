@@ -1,710 +1,367 @@
 <!DOCTYPE html>
-<html lang="en"> 
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PettyCash Table</title>
-  <p style="color: red; font-weight: bold; text-align: center;">
-    Before entering records, ensure all previous history or data is cleared by refreshing the page, pressing F5, or clicking the 'Clear All' button.
-  </p>
-  <p style="color: #333; font-weight: bold; text-align: center;">
-    1. Ensure all entries match the invoice or receipt. If no invoice number exists, leave the field blank to auto-generate one (e.g., Supplier+Date).<br>
-    2. If no VAT amount is provided, enter 0 in the VAT amount field.
-  </p>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
-    margin: 0;
-    padding: 20px;
-  }
-
-  h2 {
-    text-align: center;
-    color: #007bff;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 20px 0;
-    background-color: #fff;
-  }
-
-  th, td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: left;
-  }
-
-  th {
-    background-color: #007bff;
-    color: white;
-  }
-
-  td {
-    min-width: 100px;
-    transition: background-color 0.3s;
-  }
-
-  td:hover {
-    background-color: #e8f0fe;
-  }
-
-  button {
-    margin: 10px;
-    padding: 8px 16px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-
-  button:hover {
-    background-color: #0056b3;
-  }
-
-  input[type="text"], input[type="date"], input[type="number"], input[type="file"], select {
-    width: 100%;
-    padding: 6px;
-    margin: 2px 0;
-    box-sizing: border-box;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-
-  input[type="file"] {
-    background-color: #f9f9f9;
-    cursor: pointer;
-  }
-
-  td {
-    padding: 5px;
-  }
-
-  input[type="text"], input[type="date"] {
-    width: auto;
-    max-width: 300px;
-    padding: 6px 10px;
-    margin: 4px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-
-  /* Style for auto-generated invoice number (grey text) */
-  input.auto-generated {
-    color: grey;
-  }
-
-  /* Style for user-entered invoice number (black text) */
-  input.user-entered {
-    color: black;
-  }
-
-  label {
-    font-weight: bold;
-    margin-right: 8px;
-  }
-
-  div {
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-  }
-
-  input[type="file"] {
-    background-color: #f8f9f9;
-  }
-
-  label {
-    font-weight: bold;
-    margin-right: 8px;
-  }
-
-  div {
-    margin: 10px 0;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DokuWiki Reader</title>
+    <!-- Using Tailwind CDN for development; for production, install Tailwind CSS locally (see https://tailwindcss.com/docs/installation) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0z' fill='%23ccc'/></svg>">
+    <style>
+        .sidebar {
+            scrollbar-width: thin;
+            scrollbar-color: #4b5563 #1f2937;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+            border-radius: 3px;
+        }
+        .content {
+            scrollbar-width: thin;
+            scrollbar-color: #4b5563 #f3f4f6;
+        }
+        .content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .content::-webkit-scrollbar-track {
+            background: #f3f4f6;
+        }
+        .content::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+            border-radius: 3px;
+        }
+        .active-page {
+            background-color: #374151;
+            border-left: 3px solid #60a5fa;
+        }
+        #content {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+        }
+        #content h1 { font-size: 1.8em; font-weight: bold; color: #1f3540; margin: 1em 0 0.5em; }
+        #content h2 { font-size: 1.5em; font-weight: bold; color: #1f3540; margin: 0.8em 0 0.4em; }
+        #content h3 { font-size: 1.3em; font-weight: bold; color: #1f3540; margin: 0.7em 0 0.3em; }
+        #content h4 { font-size: 1.1em; font-weight: bold; color: #1f3540; margin: 0.6em 0 0.3em; }
+        #content h5 { font-size: 1em; font-weight: bold; color: #1f3540; margin: 0.5em 0 0.2em; }
+        #content h6 { font-size: 0.9em; font-weight: bold; color: #1f3540; margin: 0.5em 0 0.2em; }
+        #content p { margin: 0.5em 0; }
+        #content ul { list-style: disc outside; margin: 0.5em 0 0.5em 1.5em; padding-left: 0; }
+        #content ol { list-style: decimal outside; margin: 0.5em 0 0.5em 1.5em; padding-left: 0; }
+        #content li { margin: 0.2em 0; }
+        #content li div.li { display: inline; margin: 0; padding: 0; }
+        #content li.level1 div.li { margin-left: 0; }
+        #content li.level2 div.li { margin-left: 1.5em; }
+        #content li.level3 div.li { margin-left: 3em; }
+        #content blockquote { border-left: 3px solid #999; padding-left: 1em; margin: 0.5em 0 0.5em 1em; background: #f7f9fa; font-style: italic; }
+        #content blockquote .no { display: block; }
+        #content a { color: #0000ff; text-decoration: none; }
+        #content a:hover { text-decoration: underline; }
+        #content a.interwiki, #content a.urlextern { text-decoration: underline; }
+        #content a.wikilink2 { color: #cc0000; text-decoration: underline; }
+        #content pre.code, #content pre.file { background: #f7f9fa; border: 1px solid #d7d9da; padding: 0.5em; font-family: monospace; font-size: 90%; overflow-x: auto; }
+        #content table.inline { border-collapse: collapse; border: 1px solid #dee7e7; width: 100%; margin: 0.5em 0; }
+        #content table.inline th, #content table.inline td { border: 1px solid #dee7e7; padding: 0.3em 0.5em; }
+        #content table.inline th { background: #e0e5e5; font-weight: bold; }
+        #content table.inline td.leftalign { text-align: left; }
+        #content table.inline td.centeralign { text-align: center; }
+        #content table.inline td.rightalign { text-align: right; }
+        #content img { margin: 0.5em 0; max-width: 100%; }
+        #content img.mediacenter { display: block; margin: 0.5em auto; }
+        #content img.medialeft { float: left; margin-right: 1em; max-width: 50%; }
+        #content img.mediaright { float: right; margin-left: 1em; max-width: 50%; }
+        #content hr { border-top: 1px solid #ccc; margin: 1em 0; }
+        #content .footnotes { margin-top: 1em; border-top: 1px solid #ccc; padding-top: 0.5em; }
+        #content .fn { margin: 0.5em 0; }
+        #content .fn sup { font-size: 80%; }
+        #content .fn a.fn_bot { color: #0000ff; text-decoration: none; }
+        #content .toc { margin: 1em 0; padding: 1em; background: #f7f9fa; border: 1px solid #d7d9da; border-radius: 4px; }
+        #content .tocheader { font-weight: bold; font-size: 1.2em; margin-bottom: 0.5em; }
+        #content .toc ul { list-style: none; margin: 0; padding: 0; }
+        #content .toc li { margin: 0.2em 0; }
+        #content .toc li.level1 { margin-left: 0; }
+        #content .toc li.level2 { margin-left: 1.5em; }
+        #content .toc li.level3 { margin-left: 3em; }
+        #content .toc li.level4 { margin-left: 4.5em; }
+        #content .toc li.level5 { margin-left: 6em; }
+        #content .toc a { color: #0000ff; text-decoration: none; }
+        #content .toc a:hover { text-decoration: underline; }
+        .directory .children { display: none; }
+        .directory.expanded .children { display: block; }
+        #search-input { width: 100%; padding: 0.5em 2.5em 0.5em 0.5em; border: 1px solid #4b5563; border-radius: 4px; background: #374151; color: #e5e7eb; }
+        #search-input:focus { outline: none; ring: 2px solid #60a5fa; }
+        #search-results { max-height: 200px; overflow-y: auto; }
+        #search-results li { padding: 0.5em 1em; }
+        @media (max-width: 640px) {
+            .sidebar { width: 100%; max-height: 50vh; display: none; }
+            .sidebar.active { display: flex; }
+            .content { width: 100%; }
+        }
+    </style>
 </head>
-<body>
-  <h2>PettyCash Table</h2>
-  
-  <div style="position: relative;">
-    <label for="pageTitle">Page Title:</label>
-    <input id="pageTitle" type="text" placeholder="Enter the Name here">
-    <span id="tooltip" style="display: none; position: absolute; top: 40px; left: 70px; background: yellow; padding: 3px; border: 1px solid black; font-size: 12px;">
-      Enter the Name and press Set Title button
-    </span>
-    <button id="setTitleButton">Set Title</button>
-  </div>
-
-  <div>
-    <label for="reportDate">Report Date:</label>
-    <input id="reportDate" type="date">
-  </div>
-
-  <table id="editableTable">
-    <thead>
-      <tr>
-        <th>Project/Company</th>
-        <th>Sequence no.</th>
-        <th>Date per invoice</th>
-        <th>Supplier</th>
-        <th>Inv. No.</th>
-        <th>Gross Amount (GBP)</th>
-        <th>VAT (GBP)</th>
-        <th>Net (GBP)</th>
-        <th>Paid on</th>
-        <th>Paid By</th>
-        <th>Notes</th>
-        <th>Attached Doc</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Rows will be dynamically added here -->
-    </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="5" style="text-align: right; font-weight: bold;">Total:</td>
-        <td id="grossTotal" style="font-weight: bold;">0.00</td>
-        <td colspan="7"></td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <div style="text-align: center;">
-    <button id="addRowButton">Add Row</button>
-    <button id="exportZipButton">Export to ZIP</button>
-    <button id="clearAllButton" title="Clear all data and reset the page">Clear All</button>
-  </div>
-  
-  <script>
-    // Debounce function to prevent rapid updates
-    function debounce(func, wait) {
-      let timeout;
-      return function executedFunction(...args) {
-        const later = () => {
-          clearTimeout(timeout);
-          func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-      };
-    }
-
-    function updateSequenceNumbers() {
-      const tableBody = document.querySelector("#editableTable tbody");
-      const rows = tableBody.querySelectorAll("tr");
-      rows.forEach((row, index) => {
-        const newSequenceNo = index + 1;
-        row.cells[1].textContent = newSequenceNo;
-
-        // Extract supplier, date, and invoice number
-        const invoiceInput = row.cells[4].querySelector('input');
-        let supplier = row.cells[3].querySelector('input')?.value || "Unknown";
-        const date = row.cells[2].querySelector('input')?.value.replace(/-/g, "") || "";
-        const isUserEntered = invoiceInput.dataset.isUserEntered === "true";
-        let invNoValue = invoiceInput.value.trim().replace(/^\d+_/, ''); // Remove any existing sequence number prefix
-
-        // Sanitize supplier name by replacing spaces with underscores
-        const sanitizedSupplier = supplier === "Unknown" ? supplier : supplier.replace(/\s+/g, '_');
-
-        // Compute the expected auto-generated invoice number
-        const autoGeneratedInvNo = sanitizedSupplier !== "Unknown" && date ? `${newSequenceNo}_${sanitizedSupplier}${date}` : "";
-
-        // If the invoice number field is blank or contains the auto-generated value, and the user hasn't entered a custom value, auto-generate it
-        if (!isUserEntered || invNoValue === "" || invoiceInput.value === invoiceInput.dataset.lastAutoGenerated) {
-          if (autoGeneratedInvNo) {
-            invoiceInput.value = autoGeneratedInvNo;
-            invoiceInput.classList.remove("user-entered");
-            invoiceInput.classList.add("auto-generated");
-            invoiceInput.dataset.lastAutoGenerated = autoGeneratedInvNo;
-            invoiceInput.dataset.isUserEntered = "false";
-          } else {
-            invoiceInput.value = "";
-            invoiceInput.classList.remove("user-entered", "auto-generated");
-            invoiceInput.dataset.lastAutoGenerated = "";
-            invoiceInput.dataset.isUserEntered = "false";
-          }
-        } else {
-          // If the user has entered a custom value, update it with the new sequence number
-          invoiceInput.value = `${newSequenceNo}_${invNoValue}`;
-          invoiceInput.classList.remove("auto-generated");
-          invoiceInput.classList.add("user-entered");
-        }
-
-        // Update file name if a file is uploaded
-        const fileCell = row.cells[11];
-        const fileInput = fileCell.querySelector("input[type='file']");
-        if (fileInput && fileInput.files.length > 0) {
-          const invNo = invoiceInput.value || "";
-          const originalFileName = fileInput.files[0].name;
-          const fileExt = originalFileName.substring(originalFileName.lastIndexOf('.'));
-
-          let newFileName;
-          if (invoiceInput.dataset.isUserEntered === "true" && invNo) {
-            newFileName = `${newSequenceNo}_${supplier}_${invNo.replace(/^\d+_/, '')}${fileExt}`;
-          } else {
-            newFileName = `${newSequenceNo}_${sanitizedSupplier}${date}${fileExt}`;
-          }
-
-          fileInput.setAttribute("data-newname", newFileName);
-          const fileLabel = fileCell.querySelector("span");
-          if (fileLabel) {
-            fileLabel.textContent = `Uploaded: ${newFileName}`;
-          }
-        }
-      });
-      saveTableData();
-    }
-
-    // Debounced version of updateSequenceNumbers
-    const debouncedUpdateSequenceNumbers = debounce(updateSequenceNumbers, 100);
-
-    function updateGrossTotal() {
-      const tableBody = document.querySelector("#editableTable tbody");
-      const rows = tableBody.querySelectorAll("tr");
-      let total = 0;
-
-      rows.forEach(row => {
-        const grossInput = row.cells[5].querySelector("input");
-        const grossValue = grossInput ? parseFloat(grossInput.value) || 0 : 0;
-        total += grossValue;
-      });
-
-      const grossTotalCell = document.getElementById("grossTotal");
-      grossTotalCell.textContent = total.toFixed(2);
-    }
-
-    function saveTableData() {
-      const table = document.getElementById("editableTable");
-      const rows = table.querySelectorAll("tbody tr");
-      const tableData = [];
-
-      rows.forEach((row, rowIndex) => {
-        const rowData = [];
-        Array.from(row.cells).forEach((cell, index) => {
-          const fileInput = cell.querySelector("input[type='file']");
-          if (index === 11 && fileInput) {
-            const fileName = fileInput.getAttribute("data-newname") || "";
-            rowData.push({ fileName: fileName });
-          } else {
-            const input = cell.querySelector("input");
-            const select = cell.querySelector("select");
-            const value = input ? input.value : select ? select.value : cell.textContent.trim();
-            rowData.push(value);
-          }
-        });
-        tableData.push(rowData);
-      });
-
-      localStorage.setItem("tableData", JSON.stringify(tableData));
-      updateGrossTotal();
-    }
-
-    function loadTableData() {
-      const tableBody = document.querySelector("#editableTable tbody");
-      tableBody.innerHTML = "";
-      localStorage.removeItem("tableData");
-      document.getElementById("pageTitle").value = "";
-      document.getElementById("reportDate").value = "";
-      document.title = "PettyCash Table";
-      updateGrossTotal();
-    }
-
-    document.getElementById("setTitleButton").addEventListener("click", () => {
-      const titleInput = document.getElementById("pageTitle").value.trim();
-      if (titleInput) {
-        document.title = titleInput;
-        alert(`Title updated to: ${titleInput}`);
-      } else {
-        alert("Please enter a valid title.");
-      }
-    });
-
-    const pageTitleInput = document.getElementById("pageTitle");
-    const tooltip = document.getElementById("tooltip");
-
-    pageTitleInput.addEventListener("focus", function() {
-      tooltip.style.display = "inline";
-    });
-
-    pageTitleInput.addEventListener("blur", function() {
-      tooltip.style.display = "none";
-    });
-
-    document.getElementById("addRowButton").addEventListener("click", () => {
-      const tableBody = document.querySelector('#editableTable tbody');
-      const newRow = tableBody.insertRow();
-      const deleteCell = newRow.insertCell(-1);
-      const deleteButton = document.createElement("button");
-      deleteButton.textContent = "Delete";
-      deleteButton.addEventListener("click", () => {
-        newRow.remove();
-        debouncedUpdateSequenceNumbers();
-        saveTableData();
-      });
-      deleteCell.appendChild(deleteButton);
-
-      for (let i = 0; i < 12; i++) {
-        const newCell = newRow.insertCell(i);
-
-        switch (i) {
-          case 0:
-            const projectSelect = document.createElement('select');
-            ["General", "Fukum", "Ingress", "AC", "DR", "GP"].forEach(option => {
-              const opt = document.createElement('option');
-              opt.value = option;
-              opt.textContent = option;
-              projectSelect.appendChild(opt);
-            });
-            newCell.appendChild(projectSelect);
-            projectSelect.onchange = saveTableData;
-            break;
-
-          case 1:
-            newCell.textContent = tableBody.querySelectorAll("tr").length;
-            break;
-
-          case 2:
-          case 8:
-            const dateInput = document.createElement('input');
-            dateInput.type = 'date';
-            dateInput.oninput = () => {
-              debouncedUpdateSequenceNumbers();
-              saveTableData();
-            };
-            newCell.appendChild(dateInput);
-            break;
-
-          case 3:
-            const supplierInput = document.createElement('input');
-            supplierInput.type = 'text';
-            supplierInput.oninput = () => {
-              debouncedUpdateSequenceNumbers();
-              saveTableData();
-            };
-            newCell.appendChild(supplierInput);
-            break;
-
-          case 4:
-            const invoiceInput = document.createElement('input');
-            invoiceInput.type = 'text';
-            invoiceInput.placeholder = "Auto-generates (needs Supplier & Date)";
-            invoiceInput.dataset.isUserEntered = "false";
-            invoiceInput.dataset.lastAutoGenerated = "";
-            invoiceInput.classList.add("auto-generated");
-
-            // Focus-based popup
-            invoiceInput.addEventListener("focus", function() {
-              const popupMessage = document.createElement("div");
-              popupMessage.textContent = "If no invoice number, leave blank to auto-generate (requires Supplier and Date).";
-              popupMessage.style.cssText = "position: absolute; background: yellow; padding: 5px; border: 1px solid black; font-size: 12px; top: 30px; left: 5px;";
-              popupMessage.id = "invoicePopup";
-              document.body.appendChild(popupMessage);
-              const rect = invoiceInput.getBoundingClientRect();
-              popupMessage.style.top = `${window.scrollY + rect.top + 30}px`;
-              popupMessage.style.left = `${window.scrollX + rect.left}px`;
-            });
-
-            invoiceInput.addEventListener("blur", function() {
-              document.getElementById("invoicePopup")?.remove();
-              saveTableData();
-            });
-
-            // Updated hover-based tooltip with new message
-            invoiceInput.addEventListener("mouseover", function() {
-              const hoverMessage = document.createElement("div");
-              hoverMessage.textContent = "If you don’t find the invoice number on the invoice, do not input it; if found, please input the invoice number.";
-              hoverMessage.style.cssText = "position: absolute; background: lightblue; padding: 5px; border: 1px solid black; font-size: 12px; z-index: 1000;";
-              hoverMessage.id = "invoiceHoverTooltip";
-              document.body.appendChild(hoverMessage);
-              const rect = invoiceInput.getBoundingClientRect();
-              hoverMessage.style.top = `${window.scrollY + rect.top - 30}px`; // Position above the input
-              hoverMessage.style.left = `${window.scrollX + rect.left}px`;
-            });
-
-            invoiceInput.addEventListener("mouseout", function() {
-              document.getElementById("invoiceHoverTooltip")?.remove();
-            });
-
-            invoiceInput.addEventListener("input", function() {
-              if (this.value.trim() === "") {
-                this.dataset.isUserEntered = "false";
-                this.classList.remove("user-entered");
-                this.classList.add("auto-generated");
-              } else {
-                this.dataset.isUserEntered = "true";
-                this.classList.remove("auto-generated");
-                this.classList.add("user-entered");
-              }
-              debouncedUpdateSequenceNumbers();
-              saveTableData();
-            });
-
-            newCell.appendChild(invoiceInput);
-            break;
-
-          case 5:
-            const grossInput = document.createElement('input');
-            grossInput.type = 'number';
-            grossInput.step = '0.01';
-            grossInput.value = "0.00";
-            grossInput.oninput = () => {
-              updateNet(newRow);
-              saveTableData();
-            };
-            grossInput.onblur = function() {
-              if (!this.value || isNaN(parseFloat(this.value))) {
-                this.value = "0.00";
-              } else {
-                this.value = parseFloat(this.value).toFixed(2);
-              }
-              updateNet(newRow);
-              saveTableData();
-            };
-            newCell.appendChild(grossInput);
-            break;
-
-          case 6:
-            const vatInput = document.createElement('input');
-            vatInput.type = 'number';
-            vatInput.step = '0.01';
-            vatInput.value = "0.00";
-            vatInput.oninput = () => {
-              updateNet(newRow);
-              saveTableData();
-            };
-            vatInput.onblur = function() {
-              if (!this.value || isNaN(parseFloat(this.value))) {
-                this.value = "0.00";
-              } else {
-                this.value = parseFloat(this.value).toFixed(2);
-              }
-              updateNet(newRow);
-              saveTableData();
-            };
-
-            // Hover-based tooltip for VAT (GBP)
-            vatInput.addEventListener("mouseover", function() {
-              const hoverMessage = document.createElement("div");
-              hoverMessage.textContent = "If you find the VAT amount on the invoice, please provide it; if not, input 0.";
-              hoverMessage.style.cssText = "position: absolute; background: lightblue; padding: 5px; border: 1px solid black; font-size: 12px; z-index: 1000;";
-              hoverMessage.id = "vatHoverTooltip";
-              document.body.appendChild(hoverMessage);
-              const rect = vatInput.getBoundingClientRect();
-              hoverMessage.style.top = `${window.scrollY + rect.top - 30}px`; // Position above the input
-              hoverMessage.style.left = `${window.scrollX + rect.left}px`;
-            });
-
-            vatInput.addEventListener("mouseout", function() {
-              document.getElementById("vatHoverTooltip")?.remove();
-            });
-
-            newCell.appendChild(vatInput);
-            break;
-
-          case 7:
-            newCell.textContent = '0.00';
-            break;
-
-          case 9:
-            const paidBySelect = document.createElement('select');
-            ["Laura sausage", "Musk burger", "Jane Potato", "Julia Tea", "Kiwi Juice"].forEach(option => {
-              const opt = document.createElement('option');
-              opt.value = option;
-              opt.textContent = option;
-              paidBySelect.appendChild(opt);
-            });
-            newCell.appendChild(paidBySelect);
-            paidBySelect.onchange = saveTableData;
-            break;
-
-          case 10:
-            const notesInput = document.createElement('input');
-            notesInput.type = 'text';
-            notesInput.oninput = saveTableData;
-            newCell.appendChild(notesInput);
-            break;
-
-          case 11:
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = '.jpg,.png,.pdf,.xls,.xlsx,.doc,.docx';
-            fileInput.onchange = () => {
-              if (fileInput.files.length > 0) {
-                const sequenceNo = newRow.cells[1].textContent.trim();
-                const supplier = newRow.cells[3].querySelector('input')?.value || "Unknown";
-                const invNo = newRow.cells[4].querySelector('input')?.value || "";
-                const date = newRow.cells[2].querySelector('input')?.value.replace(/-/g, "") || "";
-                const originalFileName = fileInput.files[0].name;
-                const fileExt = originalFileName.substring(originalFileName.lastIndexOf('.'));
-
-                const sanitizedSupplier = supplier === "Unknown" ? supplier : supplier.replace(/\s+/g, '_');
-                const isAutoGenerated = newRow.cells[4].querySelector('input')?.dataset.isUserEntered !== "true";
-                let newFileName;
-                if (isAutoGenerated) {
-                  newFileName = `${sequenceNo}_${sanitizedSupplier}${date}${fileExt}`;
-                } else {
-                  newFileName = `${sequenceNo}_${supplier}_${invNo.replace(/^\d+_/, '')}${fileExt}`;
+<body class="flex flex-row min-h-screen bg-gray-100">
+    <aside class="sidebar w-64 bg-gray-800 text-gray-200 flex flex-col h-full overflow-y-auto">
+        <div class="p-4 border-b border-gray-700">
+            <h1 class="text-xl font-bold flex items-center">
+                <i data-feather="book" class="mr-2"></i>
+                DokuWiki
+            </h1>
+        </div>
+        <div class="p-4 border-b border-gray-700">
+            <div class="relative">
+                <input type="text" id="search-input" placeholder="Search pages..."
+                    class="w-full bg-gray-700 text-gray-200 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <i data-feather="search" class="absolute right-3 top-2.5 text-gray-400"></i>
+            </div>
+            <div id="search-results" class="text-sm mt-2"></div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <div class="space-y-1 p-2">
+                <div class="text-gray-400 uppercase text-xs font-semibold px-3 py-2">Pages</div>
+                <ul id="file-tree" class="text-sm"></ul>
+            </div>
+        </div>
+        <div class="p-4 border-t border-gray-700 text-sm text-gray-400">
+            <div class="flex items-center justify-between">
+                <span>v1.0.0</span>
+                <button class="text-gray-400 hover:text-white">
+                    <i data-feather="settings"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+    <div class="flex-1 flex flex-col content">
+        <div class="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <button class="p-2 rounded-lg hover:bg-gray-100 md:hidden" id="mobile-menu-button">
+                    <i data-feather="menu"></i>
+                </button>
+                <div class="text-sm text-gray-500">
+                    <span id="page-title">Welcome</span>
+                </div>
+            </div>
+        </div>
+        <main class="flex-1 p-6 overflow-y-auto content">
+            <div id="content" class="max-w-none">Loading...</div>
+        </main>
+    </div>
+    <script src="dokuparserjs.js" onerror="document.getElementById('content').innerHTML='<p class=\"text-red-600\">Error: Failed to load dokuparserjs.js. Ensure it exists in the project root.</p>'"></script>
+    <script>
+        feather.replace();
+        const BASE_PATH = 'data/pages';
+        const DEFAULT_PAGE = 'data/pages/wiki/welcome.txt';
+        let fileTreeData = []; // Cache all .txt files recursively
+        let directoryData = []; // Cache directory paths
+        async function getDirectoryContents(dirname) {
+            console.log(`Fetching directory: ${dirname}`);
+            try {
+                const decodedDirname = decodeURIComponent(dirname);
+                const response = await fetch(decodedDirname.endsWith('/') ? decodedDirname : `${decodedDirname}/`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const links = doc.querySelectorAll('ul li a');
+                const contents = [];
+                for (let link of links) {
+                    let name = decodeURIComponent(link.innerHTML.trim());
+                    if (name === '../') continue;
+                    const isDir = name.endsWith('/');
+                    if (isDir) name = name.slice(0, -1);
+                    contents.push({ name, isDir, path: `${dirname}/${encodeURIComponent(name)}` });
                 }
-
-                fileInput.setAttribute("data-newname", newFileName);
-                const fileLabel = newCell.querySelector("span") || document.createElement("span");
-                fileLabel.textContent = `Uploaded: ${newFileName}`;
-                if (!newCell.querySelector("span")) {
-                  newCell.insertBefore(fileLabel, fileInput);
-                }
-                saveTableData();
-              }
-            };
-            newCell.appendChild(fileInput);
-            break;
-        }
-      }
-      debouncedUpdateSequenceNumbers();
-      saveTableData();
-    });
-
-    function updateNet(row) {
-      const gross = parseFloat(row.cells[5].querySelector('input')?.value || 0);
-      const vat = parseFloat(row.cells[6].querySelector('input')?.value || 0);
-      row.cells[7].textContent = (gross - vat).toFixed(2);
-    }
-
-    document.getElementById("clearAllButton").addEventListener("click", () => {
-      const tableBody = document.querySelector("#editableTable tbody");
-      tableBody.innerHTML = "";
-      localStorage.removeItem("tableData");
-      document.getElementById("pageTitle").value = "";
-      document.getElementById("reportDate").value = "";
-      document.title = "PettyCash Table";
-      updateGrossTotal();
-      alert("All data has been cleared and page reset!");
-    });
-
-    document.getElementById("exportZipButton").addEventListener("click", async () => {
-      try {
-        const table = document.getElementById("editableTable");
-        const bodyRows = table.querySelectorAll("tbody tr");
-        const headers = Array.from(document.querySelectorAll("thead th")).map(th => th.innerText.trim());
-        
-        const data = [headers];
-        const zip = new JSZip();
-        const filesFolder = zip.folder("files");
-        
-        // Ensure all numeric inputs are formatted
-        bodyRows.forEach(row => {
-          const grossInput = row.cells[5].querySelector('input');
-          const vatInput = row.cells[6].querySelector('input');
-          if (grossInput) grossInput.dispatchEvent(new Event('blur'));
-          if (vatInput) vatInput.dispatchEvent(new Event('blur'));
-        });
-
-        for (const row of bodyRows) {
-          const rowData = [];
-          for (let i = 0; i < 12; i++) {
-            const cell = row.cells[i];
-            if (i === 11) {
-              const fileInput = cell.querySelector('input[type="file"]');
-              if (fileInput?.files.length > 0) {
-                const file = fileInput.files[0];
-                const newFileName = fileInput.getAttribute("data-newname") || file.name;
-                const content = await file.arrayBuffer();
-                filesFolder.file(newFileName, content);
-                rowData.push(newFileName);
-              } else {
-                rowData.push("");
-              }
-            } else if (i === 5 || i === 6) {
-              // Handle Gross Amount (GBP) and VAT (GBP) as numbers
-              const input = cell.querySelector("input");
-              const value = input && input.value ? parseFloat(input.value) : 0;
-              rowData.push(value);
-            } else if (i === 7) {
-              // Handle Net (GBP) as number
-              const value = parseFloat(cell.textContent.trim()) || 0;
-              rowData.push(value);
-            } else {
-              const input = cell.querySelector("input");
-              const select = cell.querySelector("select");
-              const value = input ? input.value : select ? select.value : cell.textContent.trim();
-              rowData.push(value);
+                console.log(`Directory contents for ${dirname}:`, contents);
+                return contents;
+            } catch (error) {
+                console.warn(`Warning: Failed to fetch directory ${dirname}: ${error.message}`);
+                return [];
             }
-          }
-          data.push(rowData);
         }
-        
-        const reportTotal = parseFloat(document.getElementById("grossTotal").textContent.trim()) || 0;
-        const footerData = ["Total:", "", "", "", "", reportTotal, "", "", "", "", "", ""];
-        data.push(footerData);
-        
-        // Create worksheet with proper cell types
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        
-        // Set number format for Gross Amount (GBP), VAT (GBP), and Net (GBP) columns
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        for (let R = 1; R <= range.e.r; ++R) {
-          // Gross Amount (GBP) - column F (index 5)
-          const grossCell = ws[XLSX.utils.encode_cell({ r: R, c: 5 })];
-          if (grossCell && grossCell.v !== undefined) {
-            grossCell.t = 'n'; // Number type
-            grossCell.z = '0.00'; // Two decimal places
-          }
-          
-          // VAT (GBP) - column G (index 6)
-          const vatCell = ws[XLSX.utils.encode_cell({ r: R, c: 6 })];
-          if (vatCell && vatCell.v !== undefined) {
-            vatCell.t = 'n';
-            vatCell.z = '0.00';
-          }
-          
-          // Net (GBP) - column H (index 7)
-          const netCell = ws[XLSX.utils.encode_cell({ r: R, c: 7 })];
-          if (netCell && netCell.v !== undefined) {
-            netCell.t = 'n';
-            netCell.z = '0.00';
-          }
+        async function collectAllFiles(dirname, parentPath = '') {
+            const contents = await getDirectoryContents(dirname);
+            const files = [];
+            for (const item of contents) {
+                const displayName = decodeURIComponent(item.name);
+                const fullPath = parentPath ? `${parentPath}/${displayName}` : displayName;
+                if (item.isDir) {
+                    directoryData.push({ name: displayName, path: item.path, displayPath: fullPath });
+                    const subFiles = await collectAllFiles(item.path, fullPath);
+                    files.push(...subFiles);
+                } else if (item.name.endsWith('.txt')) {
+                    files.push({ name: displayName, path: item.path, displayPath: fullPath });
+                }
+            }
+            return files;
         }
-        
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-        
-        const reportDate = document.getElementById("reportDate").value;
-        if (!reportDate) {
-          alert("Please select a report date!");
-          return;
+        async function buildTreeAsync(dirname, parentUl) {
+            try {
+                if (!fileTreeData.length) {
+                    directoryData = [];
+                    fileTreeData = await collectAllFiles(dirname);
+                    console.log('Collected all files:', fileTreeData);
+                    console.log('Collected directories:', directoryData);
+                }
+                const tree = {};
+                fileTreeData.forEach(file => {
+                    const parts = file.displayPath.split('/');
+                    let current = tree;
+                    parts.forEach((part, index) => {
+                        if (index === parts.length - 1) {
+                            current[part] = { path: file.path, isDir: false };
+                        } else {
+                            if (!current[part]) current[part] = { children: {}, isDir: true };
+                            current = current[part].children;
+                        }
+                    });
+                });
+                parentUl.innerHTML = '';
+                function renderTree(node, ul, prefix = '') {
+                    Object.entries(node).sort((a, b) => a[0].localeCompare(b[0])).forEach(([name, data]) => {
+                        const li = document.createElement('li');
+                        li.className = 'py-1';
+                        if (data.isDir) {
+                            li.innerHTML = `<a href="#" class="block px-4 py-2 text-gray-200 hover:bg-gray-700 rounded"><i data-feather="folder" class="inline mr-2 w-4 h-4"></i>${name}/</a>`;
+                            const subUl = document.createElement('ul');
+                            subUl.className = 'pl-4';
+                            li.appendChild(subUl);
+                            ul.appendChild(li);
+                            li.querySelector('a').addEventListener('click', async (e) => {
+                                e.preventDefault();
+                                if (!li.classList.contains('expanded')) {
+                                    li.classList.add('expanded');
+                                    renderTree(data.children, subUl, `${prefix}/${encodeURIComponent(name)}`);
+                                } else {
+                                    li.classList.remove('expanded');
+                                    subUl.innerHTML = '';
+                                }
+                            });
+                        } else {
+                            li.innerHTML = `<a href="#" class="block px-4 py-2 text-gray-200 hover:bg-gray-700 rounded" data-path="${data.path}"><i data-feather="file-text" class="inline mr-2 w-4 h-4"></i>${name}</a>`;
+                            ul.appendChild(li);
+                        }
+                    });
+                }
+                renderTree(tree, parentUl, dirname);
+                feather.replace(); // Re-render icons after tree update
+            } catch (error) {
+                parentUl.innerHTML += `<li class="text-red-500 px-4 py-2">Error loading ${dirname}: ${error.message}</li>`;
+            }
         }
-        
-        const pageTitle = document.title.replace(/[^a-zA-Z0-9]/g, '_') || "exported_data";
-        const excelBuffer = XLSX.write(wb, {
-          bookType: "xlsx",
-          type: "array"
+        function renderSearchResults(filter = '') {
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '';
+            if (!filter) return;
+            const filteredFiles = fileTreeData.filter(file => file.displayPath.toLowerCase().includes(filter.toLowerCase()));
+            const filteredDirs = directoryData.filter(dir => dir.displayPath.toLowerCase().includes(filter.toLowerCase()));
+            if (filteredFiles.length || filteredDirs.length) {
+                const ul = document.createElement('ul');
+                ul.className = 'space-y-1';
+                filteredDirs.forEach(dir => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<a href="#" class="block px-4 py-2 text-gray-200 hover:bg-gray-700 rounded"><i data-feather="folder" class="inline mr-2 w-4 h-4"></i>${dir.displayPath}/</a>`;
+                    ul.appendChild(li);
+                });
+                filteredFiles.forEach(file => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<a href="#" class="block px-4 py-2 text-gray-200 hover:bg-gray-700 rounded" data-path="${file.path}"><i data-feather="file-text" class="inline mr-2 w-4 h-4"></i>${file.name}</a>`;
+                    ul.appendChild(li);
+                    li.querySelector('a').addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        const path = file.path;
+                        document.querySelectorAll('.sidebar a').forEach(i => i.classList.remove('active-page'));
+                        li.querySelector('a').classList.add('active-page');
+                        const treeLink = document.querySelector(`#file-tree a[data-path="${path}"]`);
+                        if (treeLink) treeLink.classList.add('active-page');
+                        document.getElementById('page-title').textContent = decodeURIComponent(path.split('/').pop().replace('.txt', ''));
+                        await loadPage(path);
+                    });
+                });
+                resultsDiv.appendChild(ul);
+                feather.replace(); // Re-render icons in search results
+            } else {
+                resultsDiv.innerHTML = '<p class="px-4 py-2 text-gray-400">No results found</p>';
+            }
+        }
+        const fileTree = document.getElementById('file-tree');
+        const searchInput = document.getElementById('search-input');
+        buildTreeAsync(BASE_PATH, fileTree).then(() => {
+            loadPage(DEFAULT_PAGE);
         });
-
-        // Add the Excel file to the ZIP
-        zip.file(`${pageTitle}_${reportDate}.xlsx`, excelBuffer);
-
-        // Generate and download the ZIP file
-        zip.generateAsync({ type: "blob", mimeType: "application/zip" }).then(content => {
-          saveAs(content, `${pageTitle}_${reportDate}.zip`);
+        searchInput.addEventListener('input', (e) => {
+            const filter = e.target.value.trim();
+            renderSearchResults(filter);
         });
-      } catch (error) {
-        console.error("Error exporting to ZIP:", error);
-        alert("Failed to export to ZIP. Check the console for details.");
-      }
-    });
-
-    window.onload = loadTableData;
-  </script>
+        fileTree.addEventListener('click', async (e) => {
+            if (e.target.tagName === 'A' && e.target.dataset.path && e.target.dataset.path.endsWith('.txt')) {
+                e.preventDefault();
+                const path = e.target.dataset.path;
+                console.log(`Fetching file from tree: ${path}`);
+                document.querySelectorAll('.sidebar a').forEach(i => i.classList.remove('active-page'));
+                e.target.classList.add('active-page');
+                document.getElementById('page-title').textContent = decodeURIComponent(path.split('/').pop().replace('.txt', ''));
+                await loadPage(path);
+            }
+        });
+        document.getElementById('content').addEventListener('click', async (e) => {
+            if (e.target.tagName === 'A' && (e.target.classList.contains('wikilink1') || e.target.classList.contains('wikilink2'))) {
+                e.preventDefault();
+                let href = e.target.getAttribute('href');
+                if (!href.endsWith('.txt')) href += '.txt';
+                if (href.startsWith('/data/pages/')) {
+                    console.log(`Fetching page from link: ${href}`);
+                    document.querySelectorAll('.sidebar a').forEach(i => i.classList.remove('active-page'));
+                    const link = document.querySelector(`.sidebar a[data-path="${href}"]`);
+                    if (link) link.classList.add('active-page');
+                    document.getElementById('page-title').textContent = decodeURIComponent(href.split('/').pop().replace('.txt', ''));
+                    await loadPage(href);
+                }
+            }
+        });
+        document.getElementById('mobile-menu-button').addEventListener('click', () => {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        });
+        async function loadPage(path) {
+            try {
+                const decodedPath = decodeURIComponent(path);
+                const response = await fetch(decodedPath);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const text = await response.text();
+                console.log(`File content fetched (${decodedPath}, ${text.length} chars)`);
+                const namespace = decodedPath.split('/').slice(2, -1).map(decodeURIComponent).join(':').replace(/^:+|:+$/g, '');
+                console.log(`Namespace: ${namespace}`);
+                if (typeof DokuParserJS === 'undefined') {
+                    throw new Error('DokuParserJS not defined. Ensure dokuparserjs.js is loaded.');
+                }
+                const parser = new DokuParserJS({
+                    currentNamespace: namespace,
+                    interwikiMap: {
+                        wp: 'https://en.wikipedia.org/wiki/',
+                        doku: 'https://www.dokuwiki.org/'
+                    },
+                    mediaBasePath: '/data/media/',
+                    pagesBasePath: '/data/pages/',
+                    useTxtExtension: true,
+                    useEmoji: true,
+                    toc: true
+                });
+                const html = parser.parse(text);
+                console.log('Parsed HTML:', html.substring(0, 100) + '...');
+                document.getElementById('content').innerHTML = html;
+                console.log('Content rendered:', document.getElementById('content').innerHTML.substring(0, 100) + '...');
+            } catch (error) {
+                console.error('Error processing page:', error);
+                document.getElementById('content').innerHTML = `<p class="text-red-600">Error loading ${path}: ${error.message}</p>`;
+            }
+        }
+    </script>
 </body>
 </html>
